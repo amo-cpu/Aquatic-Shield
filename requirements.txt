@@ -1,0 +1,16 @@
+pandas
+numpy
+networkx
+folium
+plotly
+dash
+streamlit
+scikit-learn
+geopandas
+requests
+matplotlib
+seaborn
+pulp
+ortools
+openpyxl
+shapely

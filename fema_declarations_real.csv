@@ -1,0 +1,62 @@
+disaster_number,incident_type,state,title,year,month,deaths,damage_billions,declaration_date,fips_state_code
+4730,Hurricane,FL,Hurricane Idalia,2023,8,4,3.6,2023-08-01,12
+4718,Flood,VT,Vermont Flooding,2023,7,0,0.3,2023-07-01,50
+4701,Flood,CA,California Floods / Atmospheric Rivers,2023,1,22,4.2,2023-01-01,06
+4690,Hurricane,FL,Hurricane Nicole,2022,11,11,4.5,2022-11-01,12
+4674,Hurricane,SC,Hurricane Ian,2022,9,1,0.3,2022-09-01,45
+4673,Hurricane,FL,Hurricane Ian,2022,9,161,112.9,2022-09-01,12
+4634,Flood,KY,Eastern Kentucky Floods,2022,7,43,1.8,2022-07-01,21
+4614,Hurricane,PA,Hurricane Ida,2021,9,13,1.8,2021-09-01,42
+4613,Hurricane,NJ,Hurricane Ida,2021,9,30,5.0,2021-09-01,34
+4612,Hurricane,NY,Hurricane Ida,2021,9,18,7.0,2021-09-01,36
+4611,Hurricane,LA,Hurricane Ida,2021,8,28,75.0,2021-08-01,22
+4560,Hurricane,MS,Hurricane Zeta,2020,10,6,3.6,2020-10-01,28
+4559,Hurricane,LA,Hurricane Delta,2020,10,6,4.0,2020-10-01,22
+4550,Hurricane,TX,Hurricane Laura,2020,8,4,2.5,2020-08-01,48
+4543,Hurricane,LA,Hurricane Laura,2020,8,42,19.0,2020-08-01,22
+4470,Flood,MO,Missouri River Floods,2019,3,3,1.2,2019-03-01,29
+4469,Flood,NE,Nebraska Floods,2019,3,4,1.3,2019-03-01,31
+4468,Flood,IA,Iowa Floods,2019,3,3,2.0,2019-03-01,19
+4397,Hurricane,FL,Hurricane Michael,2018,10,59,25.5,2018-10-01,12
+4398,Hurricane,GA,Hurricane Michael,2018,10,5,2.5,2018-10-01,13
+4338,Hurricane,NC,Hurricane Florence,2018,9,53,24.0,2018-09-01,37
+4399,Hurricane,NC,Hurricane Florence,2018,9,53,24.0,2018-09-01,37
+4400,Hurricane,SC,Hurricane Florence,2018,9,6,2.5,2018-09-01,45
+4335,Hurricane,FL,Hurricane Irma,2017,9,92,77.2,2017-09-01,12
+4336,Hurricane,GA,Hurricane Irma,2017,9,5,2.0,2017-09-01,13
+4339,Hurricane,SC,Hurricane Irma,2017,9,2,0.5,2017-09-01,45
+4332,Hurricane,TX,Hurricane Harvey,2017,8,89,148.8,2017-08-01,48
+4337,Hurricane,LA,Hurricane Harvey,2017,8,0,0.8,2017-08-01,22
+4263,Flood,LA,Louisiana Floods,2016,8,13,10.0,2016-08-01,22
+4264,Flood,TX,Texas Floods (Memorial Day),2016,4,8,2.5,2016-04-01,48
+4223,Flood,SC,South Carolina Floods,2015,10,19,1.5,2015-10-01,45
+4116,Flood,CO,Colorado Flooding,2013,9,8,4.0,2013-09-01,08
+4157,Flood,CO,Colorado Floods,2013,9,10,3.9,2013-09-01,08
+4088,Hurricane,MD,Hurricane Sandy,2012,10,3,1.5,2012-10-01,24
+4087,Hurricane,CT,Hurricane Sandy,2012,10,5,2.0,2012-10-01,09
+4086,Hurricane,NJ,Hurricane Sandy,2012,10,37,36.8,2012-10-01,34
+4085,Hurricane,NY,Hurricane Sandy,2012,10,43,65.0,2012-10-01,36
+1832,Hurricane,NC,Hurricane Irene,2011,8,25,14.0,2011-08-01,37
+1836,Hurricane,VA,Hurricane Irene,2011,8,11,3.0,2011-08-01,51
+1996,Flood,MO,Missouri Flooding,2011,4,0,2.5,2011-04-01,29
+1771,Flood,AR,Arkansas Floods,2010,6,20,1.0,2010-06-01,05
+1766,Flood,TN,Tennessee Floods,2010,5,31,2.0,2010-05-01,47
+1743,Flood,ND,Red River Flooding,2009,3,0,1.5,2009-03-01,38
+1685,Hurricane,LA,Hurricane Gustav,2008,9,15,4.3,2008-09-01,22
+1680,Hurricane,LA,Hurricane Ike,2008,9,0,3.0,2008-09-01,22
+1679,Hurricane,TX,Hurricane Ike,2008,9,84,37.6,2008-09-01,48
+1566,Flood,TX,Texas Floods,2007,6,3,0.8,2007-06-01,48
+1439,Hurricane,FL,Hurricane Wilma,2005,10,35,29.0,2005-10-01,12
+1609,Hurricane,TX,Hurricane Rita,2005,9,120,18.5,2005-09-01,48
+1610,Hurricane,LA,Hurricane Rita,2005,9,7,10.0,2005-09-01,22
+1602,Hurricane,LA,Hurricane Katrina,2005,8,1800,186.0,2005-08-01,22
+1604,Hurricane,MS,Hurricane Katrina,2005,8,238,45.0,2005-08-01,28
+1605,Hurricane,AL,Hurricane Katrina,2005,8,2,1.5,2005-08-01,01
+1607,Hurricane,FL,Hurricane Katrina,2005,8,14,1.0,2005-08-01,12
+1385,Hurricane,FL,Hurricane Frances,2004,9,49,9.0,2004-09-01,12
+1393,Hurricane,FL,Hurricane Ivan,2004,9,57,14.0,2004-09-01,12
+1399,Hurricane,FL,Hurricane Jeanne,2004,9,28,8.0,2004-09-01,12
+1379,Hurricane,FL,Hurricane Charley,2004,8,35,16.0,2004-08-01,12
+1300,Flood,TX,Texas Flood (Allison),2001,6,22,9.0,2001-06-01,48
+1241,Hurricane,FL,Hurricane Irene,1999,10,0,0.8,1999-10-01,12
+1233,Flood,NC,Hurricane Floyd Floods,1999,9,35,6.1,1999-09-01,37

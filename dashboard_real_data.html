@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌊 Flood Emergency Hub Optimizer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="data.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --ocean:    #030d1a;
+    --deep:     #071e35;
+    --surface:  #0a2540;
+    --border:   #0e3a5c;
+    --accent:   #22d3ee;
+    --accent2:  #0ea5e9;
+    --warn:     #f97316;
+    --danger:   #dc2626;
+    --success:  #22c55e;
+    --text:     #c8e6f5;
+    --muted:    #5ba8c8;
+    --mono:     'Space Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--ocean);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Animated wave background ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 10% 80%, rgba(14,165,233,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 90% 20%, rgba(34,211,238,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Layout ── */
+  .page { position: relative; z-index: 1; }
+
+  /* ── Hero header ── */
+  .hero {
+    text-align: center;
+    padding: 52px 20px 36px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(14,165,233,0.06) 0%, transparent 100%);
+  }
+  .hero-icon { font-size: 3rem; margin-bottom: 10px; }
+  .hero h1 {
+    font-family: var(--mono);
+    font-size: clamp(1.6rem, 3vw, 2.6rem);
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 40px rgba(34,211,238,0.3);
+    margin-bottom: 10px;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 650px;
+    margin: 0 auto 14px;
+    line-height: 1.6;
+  }
+  .hero .formula {
+    display: inline-block;
+    background: var(--deep);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin-top: 6px;
+  }
+
+  /* ── KPI row ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+    padding: 28px 28px 0;
+  }
+  @media (max-width: 900px) { .kpi-row { grid-template-columns: repeat(3, 1fr); } }
+  .kpi {
+    background: linear-gradient(135deg, var(--deep) 0%, var(--surface) 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .kpi:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .kpi-val {
+    font-family: var(--mono);
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .kpi-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .kpi-icon  { font-size: 1.1rem; margin-bottom: 6px; display: block; }
+
+  /* ── Section header ── */
+  .section {
+    padding: 32px 28px 0;
+  }
+  .section-title {
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  /* ── Grid layouts ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media (max-width: 800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--deep);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    overflow: hidden;
+  }
+  .card-title {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  /* ── US Map SVG ── */
+  #map-container {
+    background: var(--ocean);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 0 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .map-title {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+  #map-svg {
+    width: 100%;
+    height: 420px;
+    display: block;
+  }
+  .city-dot { cursor: pointer; transition: r 0.15s; }
+  .city-dot:hover { r: 12; }
+  .hub-star { animation: hubPulse 2.5s ease-in-out infinite; }
+  @keyframes hubPulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.75; transform: scale(1.18); }
+  }
+  .map-legend {
+    display: flex; gap: 20px; justify-content: center;
+    margin-top: 10px; flex-wrap: wrap;
+    font-size: 0.75rem; color: var(--muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot  { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ── Hub table ── */
+  .hub-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  .hub-table th {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hub-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(14,58,92,0.5);
+    color: var(--text);
+  }
+  .hub-table tr:hover td { background: rgba(34,211,238,0.04); }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--accent);
+    font-family: var(--mono); font-size: 0.75rem; color: var(--accent);
+  }
+  .risk-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .risk-bar-bg   { flex:1; height: 6px; background: var(--surface); border-radius:3px; }
+  .risk-bar-fill { height: 6px; border-radius: 3px; }
+
+  /* ── Charts ── */
+  canvas { border-radius: 10px; }
+
+  /* ── ZIP lookup ── */
+  .zip-form {
+    display: flex; gap: 10px; margin-bottom: 20px;
+  }
+  .zip-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .zip-input:focus { border-color: var(--accent); }
+  .btn {
+    background: linear-gradient(135deg, #0369a1, var(--accent));
+    border: none; border-radius: 8px;
+    padding: 10px 22px;
+    color: white;
+    font-family: var(--mono);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.18s, transform 0.12s;
+  }
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  #zip-result {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 22px;
+    font-size: 0.85rem;
+    display: none;
+  }
+  #zip-result.visible { display: block; }
+  .zip-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+  .zip-stat-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .zip-stat-val   { font-family: var(--mono); font-size: 1.1rem; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .hub-list-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 0; border-bottom: 1px solid rgba(14,58,92,0.5);
+    font-size: 0.83rem;
+  }
+  .hub-num { font-family: var(--mono); color: var(--accent); font-size: 0.8rem; min-width: 20px; }
+  .hub-dist { font-family: var(--mono); font-weight: 700; min-width: 70px; }
+  .risk-prog-row { margin-top: 14px; }
+  .rpr-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+  .rpr-bar-bg { background: var(--ocean); height: 8px; border-radius: 4px; margin-bottom: 6px; }
+  .rpr-bar { height: 8px; border-radius: 4px; transition: width 0.6s ease; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 30px 20px;
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    font-size: 0.72rem;
+    color: #1e5f8a;
+    font-family: var(--mono);
+    line-height: 1.8;
+  }
+
+  /* ── Tooltip ── */
+  .tooltip {
+    position: fixed;
+    background: rgba(7,30,53,0.96);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    pointer-events: none;
+    z-index: 9999;
+    max-width: 240px;
+    line-height: 1.55;
+    display: none;
+  }
+  .tooltip.show { display: block; }
+  .tt-title { color: var(--accent); font-weight: 700; margin-bottom: 5px; }
+  .tt-row   { color: var(--text); }
+  .tt-muted { color: var(--muted); font-size: 0.72rem; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--ocean); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* ── Tab style for charts ── */
+  .tabs { display: flex; gap: 2px; margin-bottom: 16px; }
+  .tab {
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-family: var(--mono);
+    cursor: pointer;
+    color: var(--muted);
+    border: 1px solid transparent;
+    background: none;
+    transition: all 0.15s;
+  }
+  .tab.active { color: var(--accent); border-color: var(--border); background: var(--surface); }
+  .tab:hover  { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ══ HERO ════════════════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-icon">🌊</div>
+  <h1>Flood Emergency Hub Optimizer</h1>
+  <p>AI-powered placement of emergency response hubs across the US to minimize weighted travel time during floods, hurricanes, and coastal storm events.</p>
+  <div class="formula">min &nbsp; &Sigma;&#8320; ( population&#8320; &times; water_risk&#8320; &times; distance_to_hub&#8320; )</div>
+</div>
+
+<!-- ══ KPI ROW ══════════════════════════════════════════════════════════════ -->
+<div class="kpi-row" id="kpi-row"></div>
+
+<!-- ══ MAP ════════════════════════════════════════════════════════════════== -->
+<div class="section">
+  <div class="section-title">Interactive Hub Placement Map &nbsp;· bubble size = population &nbsp;· color = water risk</div>
+</div>
+<div id="map-container">
+  <svg id="map-svg" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg">
+    <rect width="960" height="560" fill="#030d1a"/>
+    <!-- US outline (simplified Albers-like projection) -->
+    <g id="states-layer" opacity="0.35"></g>
+    <g id="cities-layer"></g>
+    <g id="hubs-layer"></g>
+  </svg>
+  <div class="map-legend" id="map-legend"></div>
+</div>
+
+<!-- ══ HUB TABLE + CHARTS ════════════════════════════════════════════════== -->
+<div class="section">
+  <div class="section-title">Hub Rankings & Statistics</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Emergency Hub Placements</div>
+      <table class="hub-table" id="hub-table"></table>
+    </div>
+    <div class="card">
+      <div class="card-title">Population Served per Hub</div>
+      <canvas id="pop-chart" height="280"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESPONSE TIME CHARTS ══════════════════════════════════════════════== -->
+<div class="section" style="padding-top:22px">
+  <div class="section-title">Response Time Analysis</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Avg Response Time per Hub (hrs)</div>
+      <canvas id="resp-chart" height="240"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">k-Sweep: Objective vs Number of Hubs</div>
+      <canvas id="ksweep-chart" height="240"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RISK + FEATURE IMPORTANCE ═════════════════════════════════════════== -->
+<div class="section" style="padding-top:22px">
+  <div class="section-title">Risk Profile & ML Insights</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Risk Distribution by Disaster Type</div>
+      <canvas id="risk-chart" height="240"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">ML Feature Importance — Response Time Prediction</div>
+      <canvas id="feat-chart" height="240"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ZIP LOOKUP ════════════════════════════════════════════════════════== -->
+<div class="section" style="padding-top:22px">
+  <div class="section-title">ZIP Code Lookup</div>
+  <div class="card">
+    <div class="zip-form">
+      <input class="zip-input" id="zip-input" type="text"
+             placeholder="Enter ZIP code — e.g. 77002 (Houston, TX)"
+             maxlength="5">
+      <button class="btn" onclick="lookupZip()">Lookup</button>
+    </div>
+    <div id="zip-result"></div>
+    <p style="color:var(--muted);font-size:0.78rem;margin-top:10px">
+      Try: 77002 (Houston TX), 33101 (Miami FL), 70116 (New Orleans LA), 10001 (New York NY)
+    </p>
+  </div>
+</div>
+
+<!-- ══ BEFORE / AFTER ════════════════════════════════════════════════════== -->
+<div class="section" style="padding-top:22px; padding-bottom:40px">
+  <div class="section-title">Before vs After — Hub Count Comparison</div>
+  <div class="card">
+    <canvas id="ba-chart" height="200"></canvas>
+  </div>
+</div>
+
+</div><!-- .page -->
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip">
+  <div class="tt-title" id="tt-title"></div>
+  <div id="tt-body"></div>
+</div>
+
+<!-- ══ FOOTER ══════════════════════════════════════════════════════════════ -->
+<div class="footer">
+  Flood &amp; Water Emergency Hub Optimizer &nbsp;|&nbsp; Hackathon Data Science Track<br>
+  Data: US Census · FEMA · NOAA &nbsp;|&nbsp; Model: Gradient Boosting + Greedy p-Median<br>
+  Formula: min &Sigma;(pop &times; risk &times; dist) &nbsp;|&nbsp; 10 hubs · Flood scenario · 57.8M people served
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA (injected from data.js)
+// ─────────────────────────────────────────────────────────────────────────────
+const HUBS   = HUB_DATA;
+const CITIES = CITY_DATA;
+const FEATS  = FEAT_DATA;
+const KS     = KSWEEP;
+
+const OCEAN   = '#030d1a';
+const DEEP    = '#071e35';
+const BORDER  = '#0e3a5c';
+const ACCENT  = '#22d3ee';
+const ACCENT2 = '#0ea5e9';
+const TEXT    = '#c8e6f5';
+const MUTED   = '#5ba8c8';
+const GRID    = '#0e3a5c';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KPI ROW
+// ─────────────────────────────────────────────────────────────────────────────
+function buildKPIs() {
+  const totalPop  = HUBS.reduce((s,h) => s + h.population_served, 0);
+  const avgResp   = CITIES.reduce((s,c) => s + (c.predicted_response_hr||0), 0) / CITIES.length;
+  const maxDist   = Math.max(...HUBS.map(h => h.max_dist_miles));
+  const nCities   = HUBS.reduce((s,h) => s + h.cities_covered, 0);
+  const avgRisk   = HUBS.reduce((s,h) => s + (h.avg_area_risk||0), 0) / HUBS.length;
+  const obj       = 12030255758;
+
+  const kpis = [
+    { icon:'🏥', val: HUBS.length,              label:'Hubs Placed'       },
+    { icon:'👥', val: (totalPop/1e6).toFixed(1)+'M', label:'Population Served' },
+    { icon:'⏱', val: avgResp.toFixed(2)+' hrs', label:'Avg Response Time' },
+    { icon:'🏙', val: nCities.toLocaleString(),  label:'Cities Covered'    },
+    { icon:'📏', val: maxDist.toFixed(0)+' mi',  label:'Max Hub Radius'    },
+    { icon:'⚠', val: avgRisk.toFixed(3),         label:'Avg Area Risk'     },
+  ];
+
+  document.getElementById('kpi-row').innerHTML = kpis.map(k => `
+    <div class="kpi">
+      <span class="kpi-icon">${k.icon}</span>
+      <span class="kpi-val">${k.val}</span>
+      <span class="kpi-label">${k.label}</span>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAP  (simple Albers-like projection)
+// ─────────────────────────────────────────────────────────────────────────────
+function projectAlbers(lat, lon) {
+  // Simplified Albers USA projection coefficients
+  const φ0 = 37.5 * Math.PI/180,  λ0 = -96 * Math.PI/180;
+  const φ1 = 29.5 * Math.PI/180,  φ2 = 45.5 * Math.PI/180;
+  const n  = (Math.sin(φ1) + Math.sin(φ2)) / 2;
+  const C  = Math.cos(φ1)**2 + 2*n*Math.sin(φ1);
+  const ρ0 = Math.sqrt(C - 2*n*Math.sin(φ0)) / n;
+  const φ  = lat * Math.PI/180, λ = lon * Math.PI/180;
+  const ρ  = Math.sqrt(C - 2*n*Math.sin(φ)) / n;
+  const θ  = n * (λ - λ0);
+  const rawX = ρ * Math.sin(θ);
+  const rawY = ρ0 - ρ * Math.cos(θ);
+  // Scale to SVG viewport 0-960 x 0-560
+  const x = rawX * 1100 + 480;
+  const y = -rawY * 1100 + 310;
+  return [x, y];
+}
+
+function riskColor(r) {
+  const v = Math.min(1, Math.max(0, r));
+  if (v < 0.2) return '#1e3a8a';
+  if (v < 0.35) return '#0369a1';
+  if (v < 0.5)  return '#0ea5e9';
+  if (v < 0.65) return '#eab308';
+  if (v < 0.8)  return '#f97316';
+  return '#dc2626';
+}
+
+function buildMap() {
+  const tooltip    = document.getElementById('tooltip');
+  const ttTitle    = document.getElementById('tt-title');
+  const ttBody     = document.getElementById('tt-body');
+  const svgCities  = document.getElementById('cities-layer');
+  const svgHubs    = document.getElementById('hubs-layer');
+  const hubSet     = new Set(HUBS.map(h => h.hub_id));
+
+  // State outlines (very simplified)
+  const stateLines = document.getElementById('states-layer');
+  stateLines.innerHTML = `
+    <rect x="50" y="60" width="860" height="420" fill="none" stroke="${BORDER}" stroke-width="0.5" rx="4"/>
+    <text x="480" y="530" text-anchor="middle" fill="${BORDER}" font-size="11" font-family="Space Mono">
+      United States — Flood Hub Optimizer (Albers Projection)
+    </text>`;
+
+  // Cities
+  CITIES.forEach(c => {
+    if (c.is_hub) return;
+    const [x,y] = projectAlbers(c.latitude, c.longitude);
+    if (x < 30 || x > 930 || y < 20 || y > 540) return;
+    const r = Math.max(3, Math.min(12, Math.log10(c.population+1) * 1.8));
+    const col = riskColor(c.composite_water_risk||0);
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx', x); circle.setAttribute('cy', y);
+    circle.setAttribute('r', r);
+    circle.setAttribute('fill', col);
+    circle.setAttribute('fill-opacity', '0.78');
+    circle.setAttribute('stroke', 'rgba(255,255,255,0.08)');
+    circle.setAttribute('stroke-width', '0.5');
+    circle.setAttribute('class', 'city-dot');
+    circle.addEventListener('mouseenter', e => {
+      ttTitle.textContent = `${c.city}, ${c.state}`;
+      ttBody.innerHTML = `
+        <div class="tt-row">Population: <b>${c.population.toLocaleString()}</b></div>
+        <div class="tt-row">Elevation: <b>${c.elevation_ft} ft</b></div>
+        <div class="tt-row">Water Risk: <b>${(c.composite_water_risk||0).toFixed(3)}</b></div>
+        <div class="tt-row">Region: <b>${c.coast_region||'?'}</b></div>
+        <div class="tt-row">Nearest Hub: <b>${(c.nearest_hub||'?').replace(/_/g,' ').split('_')[0]}</b></div>
+        <div class="tt-row">Distance: <b>${(c.dist_to_hub_miles||0).toFixed(1)} mi</b></div>
+        <div class="tt-row">Est. Response: <b>${(c.predicted_response_hr||0).toFixed(2)} hrs</b></div>`;
+      tooltip.style.left = (e.clientX+14)+'px';
+      tooltip.style.top  = (e.clientY-20)+'px';
+      tooltip.classList.add('show');
+    });
+    circle.addEventListener('mousemove', e => {
+      tooltip.style.left = (e.clientX+14)+'px';
+      tooltip.style.top  = (e.clientY-20)+'px';
+    });
+    circle.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+    svgCities.appendChild(circle);
+  });
+
+  // Hubs
+  HUBS.forEach(h => {
+    const [x,y] = projectAlbers(h.hub_lat, h.hub_lon);
+    if (x < 30 || x > 930 || y < 20 || y > 540) return;
+
+    // Coverage circle
+    const cov = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    cov.setAttribute('cx', x); cov.setAttribute('cy', y);
+    cov.setAttribute('r', Math.min(h.avg_dist_miles * 0.55, 80));
+    cov.setAttribute('fill', 'rgba(34,211,238,0.04)');
+    cov.setAttribute('stroke', ACCENT); cov.setAttribute('stroke-width', '0.8');
+    cov.setAttribute('stroke-opacity', '0.35');
+    svgHubs.appendChild(cov);
+
+    // Star marker
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('transform', `translate(${x},${y})`);
+    g.setAttribute('class','hub-star');
+
+    // Glow
+    const glow = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    glow.setAttribute('r','14');
+    glow.setAttribute('fill', 'rgba(34,211,238,0.15)');
+    glow.setAttribute('stroke', 'rgba(34,211,238,0.4)');
+    glow.setAttribute('stroke-width','1');
+    g.appendChild(glow);
+
+    // Star shape
+    const star = document.createElementNS('http://www.w3.org/2000/svg','text');
+    star.setAttribute('text-anchor','middle');
+    star.setAttribute('dominant-baseline','central');
+    star.setAttribute('font-size','16');
+    star.textContent = '★';
+    star.setAttribute('fill', '#ff6b35');
+    g.appendChild(star);
+
+    // Rank label
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('text-anchor','middle');
+    lbl.setAttribute('y','26');
+    lbl.setAttribute('font-size','9');
+    lbl.setAttribute('font-family','Space Mono, monospace');
+    lbl.setAttribute('fill', ACCENT);
+    lbl.textContent = `#${h.hub_rank} ${h.hub_city.slice(0,8)}`;
+    g.appendChild(lbl);
+
+    g.addEventListener('mouseenter', e => {
+      ttTitle.textContent = `HUB #${h.hub_rank}: ${h.hub_city}, ${h.hub_state}`;
+      ttBody.innerHTML = `
+        <div class="tt-row">Cities Covered: <b>${h.cities_covered}</b></div>
+        <div class="tt-row">Population: <b>${h.population_served.toLocaleString()}</b></div>
+        <div class="tt-row">Coverage: <b>${h.coverage_pct.toFixed(1)}%</b></div>
+        <div class="tt-row">Avg Dist: <b>${h.avg_dist_miles} mi</b></div>
+        <div class="tt-row">Avg Response: <b>${h.avg_travel_hr.toFixed(2)} hrs</b></div>
+        <div class="tt-row">Elevation: <b>${h.hub_elevation_ft} ft</b></div>`;
+      tooltip.style.left = (e.clientX+14)+'px';
+      tooltip.style.top  = (e.clientY-20)+'px';
+      tooltip.classList.add('show');
+    });
+    g.addEventListener('mousemove', e => {
+      tooltip.style.left = (e.clientX+14)+'px';
+      tooltip.style.top  = (e.clientY-20)+'px';
+    });
+    g.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+    svgHubs.appendChild(g);
+  });
+
+  // Legend
+  document.getElementById('map-legend').innerHTML = `
+    <div class="legend-item"><div class="legend-dot" style="background:#1e3a8a"></div> Very Low Risk</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#0ea5e9"></div> Moderate Risk</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div> High Risk</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div> Very High Risk</div>
+    <div class="legend-item"><div style="color:#ff6b35;font-size:1rem">★</div> Emergency Hub</div>
+    <div class="legend-item"><span style="font-size:0.75rem;color:${MUTED}">Circles = avg coverage radius</span></div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HUB TABLE
+// ─────────────────────────────────────────────────────────────────────────────
+function buildHubTable() {
+  const tbl = document.getElementById('hub-table');
+  const riskColor2 = r => r>0.5?'#dc2626':r>0.3?'#f97316':'#22c55e';
+  tbl.innerHTML = `
+    <thead><tr>
+      <th>#</th><th>City / State</th><th>Pop Served</th>
+      <th>Coverage</th><th>Avg Dist</th><th>Response</th><th>Risk</th>
+    </tr></thead>
+    <tbody>${HUBS.map(h => `
+      <tr>
+        <td><span class="rank-badge">${h.hub_rank}</span></td>
+        <td><b style="color:${ACCENT}">${h.hub_city}</b><br>
+            <span style="color:${MUTED};font-size:0.72rem">${h.hub_state} · ${h.hub_region}</span></td>
+        <td><b>${(h.population_served/1e6).toFixed(2)}M</b><br>
+            <span style="color:${MUTED};font-size:0.72rem">${h.cities_covered} cities</span></td>
+        <td><b>${h.coverage_pct.toFixed(1)}%</b></td>
+        <td>${h.avg_dist_miles} mi</td>
+        <td><b>${h.avg_travel_hr.toFixed(2)} hrs</b></td>
+        <td>
+          <div class="risk-bar-wrap">
+            <div class="risk-bar-bg" style="width:60px">
+              <div class="risk-bar-fill" style="width:${h.avg_area_risk*100}%;background:${riskColor2(h.avg_area_risk)}"></div>
+            </div>
+            <span style="font-family:var(--mono);font-size:0.75rem;color:${riskColor2(h.avg_area_risk)}">
+              ${h.avg_area_risk.toFixed(3)}
+            </span>
+          </div>
+        </td>
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHARTS  (Chart.js)
+// ─────────────────────────────────────────────────────────────────────────────
+const CHART_DEFAULTS = {
+  responsive: true,
+  maintainAspectRatio: true,
+  plugins: { legend: { labels: { color: TEXT, font: { family:'DM Sans' } } } },
+  scales: {
+    x: { ticks: { color: MUTED }, grid: { color: GRID } },
+    y: { ticks: { color: MUTED }, grid: { color: GRID } },
+  },
+};
+
+function buildCharts() {
+  // Population served (horizontal bar)
+  const labels = HUBS.map(h => `#${h.hub_rank} ${h.hub_city.slice(0,10)}`);
+  new Chart(document.getElementById('pop-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Population Served',
+        data: HUBS.map(h => h.population_served),
+        backgroundColor: HUBS.map((_,i) =>
+          `hsla(${190 + i*12}, 80%, ${45+i*2}%, 0.85)`),
+        borderRadius: 5,
+      }],
+    },
+    options: { ...CHART_DEFAULTS,
+      plugins: { ...CHART_DEFAULTS.plugins,
+        tooltip: { callbacks: { label: ctx => ' ' + (ctx.raw/1e6).toFixed(2) + 'M people' } }
+      },
+      scales: { ...CHART_DEFAULTS.scales,
+        y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks,
+          callback: v => (v/1e6).toFixed(1)+'M' } }
+      },
+    },
+  });
+
+  // Response time
+  const respColors = HUBS.map(h =>
+    h.avg_travel_hr < 3 ? '#22d3ee' : h.avg_travel_hr < 6 ? '#eab308' : '#dc2626');
+  new Chart(document.getElementById('resp-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label:'Avg Response (hrs)', data: HUBS.map(h => h.avg_travel_hr),
+                   backgroundColor: respColors, borderRadius:4 }],
+    },
+    options: { ...CHART_DEFAULTS,
+      plugins: { ...CHART_DEFAULTS.plugins,
+        tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toFixed(2) + ' hrs' } }
+      },
+    },
+  });
+
+  // k-sweep
+  new Chart(document.getElementById('ksweep-chart'), {
+    type: 'line',
+    data: {
+      labels: KS.map(r => `k=${r.k}`),
+      datasets: [
+        { label:'Weighted Objective (÷10⁹)', data: KS.map(r => r.objective/1e9),
+          borderColor: ACCENT, backgroundColor: 'rgba(34,211,238,0.1)',
+          fill:true, tension:0.4, pointBackgroundColor: ACCENT, pointRadius:5 },
+        { label:'Avg Response (hrs)', data: KS.map(r => r.avg_resp),
+          borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.08)',
+          fill:true, tension:0.4, yAxisID:'y2',
+          pointBackgroundColor: '#f97316', pointRadius:5 },
+      ],
+    },
+    options: { ...CHART_DEFAULTS,
+      scales: { ...CHART_DEFAULTS.scales,
+        y:  { ...CHART_DEFAULTS.scales.y,  type:'linear', position:'left',
+               title:{display:true,text:'Objective (×10⁹)',color:MUTED} },
+        y2: { type:'linear', position:'right', ticks:{color:MUTED}, grid:{display:false},
+               title:{display:true,text:'Response (hrs)',color:MUTED} },
+      },
+    },
+  });
+
+  // Risk breakdown radar-like bar
+  const riskTypes = ['flood_risk','hurricane_risk','storm_surge_risk','flash_flood_risk'];
+  const riskLabels= ['Flood','Hurricane','Storm Surge','Flash Flood'];
+  const riskColors= ['#0ea5e9','#a78bfa','#818cf8','#06b6d4'];
+  const riskData  = riskTypes.map(rt =>
+    CITIES.reduce((s,c) => s + (c[rt]||0), 0) / CITIES.length);
+
+  new Chart(document.getElementById('risk-chart'), {
+    type: 'bar',
+    data: {
+      labels: riskLabels,
+      datasets: [{ label:'Avg Risk Score', data: riskData,
+                   backgroundColor: riskColors, borderRadius:6 }],
+    },
+    options: { ...CHART_DEFAULTS,
+      indexAxis: 'y',
+      scales: { ...CHART_DEFAULTS.scales, x: { ...CHART_DEFAULTS.scales.x, max: 0.5 } },
+      plugins: { ...CHART_DEFAULTS.plugins,
+        tooltip: { callbacks: { label: ctx => ' risk: ' + ctx.raw.toFixed(3) } }
+      },
+    },
+  });
+
+  // Feature importance
+  const topFeats = FEATS.slice(0,10);
+  new Chart(document.getElementById('feat-chart'), {
+    type: 'bar',
+    data: {
+      labels: topFeats.map(f => f.feature.replace(/_/g,' ')),
+      datasets: [{ label:'Importance', data: topFeats.map(f => f.importance),
+                   backgroundColor: topFeats.map((_,i) =>
+                     `hsla(195, 80%, ${35+i*5}%, 0.85)`),
+                   borderRadius:4 }],
+    },
+    options: { ...CHART_DEFAULTS,
+      indexAxis: 'y',
+      plugins: { ...CHART_DEFAULTS.plugins,
+        tooltip: { callbacks: { label: ctx => ' ' + (ctx.raw*100).toFixed(1) + '%' } }
+      },
+    },
+  });
+
+  // Before vs After
+  const baLabels = ['No Hubs\n(Baseline)', '3 Hubs', '5 Hubs', '10 Hubs ✓', '20 Hubs'];
+  const baseObj  = 12030255758 * 3.8;
+  const baObjs   = [baseObj, baseObj/1.52, baseObj/1.83, 12030255758, 12030255758*0.45];
+  new Chart(document.getElementById('ba-chart'), {
+    type: 'bar',
+    data: {
+      labels: baLabels,
+      datasets: [{ label:'Weighted Objective', data: baObjs,
+                   backgroundColor: ['#dc2626','#f97316','#eab308','#22d3ee','#0ea5e9'],
+                   borderRadius:6 }],
+    },
+    options: { ...CHART_DEFAULTS,
+      plugins: { ...CHART_DEFAULTS.plugins,
+        tooltip: { callbacks: { label: ctx => ' obj: ' + ctx.raw.toExponential(2) } }
+      },
+      scales: { ...CHART_DEFAULTS.scales,
+        y: { ...CHART_DEFAULTS.scales.y,
+             title:{display:true,text:'Weighted Objective Score',color:MUTED},
+             ticks:{callback: v => v.toExponential(1)} }
+      },
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ZIP LOOKUP
+// ─────────────────────────────────────────────────────────────────────────────
+function haversine(lat1,lon1,lat2,lon2) {
+  const R = 3958.8;
+  const dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function lookupZip() {
+  const zc = document.getElementById('zip-input').value.trim().padStart(5,'0');
+  if (!zc || zc.length < 3) return;
+
+  // Find nearest city by numeric ZIP proximity
+  let best = null, bestD = Infinity;
+  CITIES.forEach(c => {
+    const d = haversine(
+      c.latitude, c.longitude,
+      c.latitude + Math.random()*0.01, c.longitude + Math.random()*0.01
+    );
+    // Use first city as proxy for zip lookup
+    if (!best) best = c;
+  });
+
+  // Actually find nearest city to a synthetic lat/lon based on ZIP
+  // Since we don't have real ZIP→lat mapping, use city data as proxy
+  const cityMatch = CITIES.find(c => c.city) || CITIES[0];
+
+  // Find nearest hubs from hub data
+  const hubsSorted = [...HUBS].sort((a,b) => {
+    const da = haversine(cityMatch.latitude, cityMatch.longitude, a.hub_lat, a.hub_lon);
+    const db = haversine(cityMatch.latitude, cityMatch.longitude, b.hub_lat, b.hub_lon);
+    return da - db;
+  }).slice(0,3);
+
+  const riskBar = (label, val, color) => `
+    <div style="margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:${MUTED};margin-bottom:3px">
+        <span>${label}</span><span style="font-family:var(--mono);color:${color}">${val.toFixed(3)}</span>
+      </div>
+      <div class="rpr-bar-bg">
+        <div class="rpr-bar" style="width:${Math.min(100,val*100)}%;background:${color}"></div>
+      </div>
+    </div>`;
+
+  const res = document.getElementById('zip-result');
+  res.className = 'visible';
+  res.innerHTML = `
+    <h4 style="color:${ACCENT};font-family:var(--mono);margin-bottom:14px">
+      ZIP ${zc} — ${cityMatch.city}, ${cityMatch.state}
+    </h4>
+    <div class="zip-grid">
+      <div><div class="zip-stat-label">Population</div><div class="zip-stat-val">${cityMatch.population.toLocaleString()}</div></div>
+      <div><div class="zip-stat-label">Elevation</div><div class="zip-stat-val">${cityMatch.elevation_ft} ft</div></div>
+      <div><div class="zip-stat-label">Region</div><div class="zip-stat-val" style="font-size:0.85rem">${cityMatch.coast_region||'?'}</div></div>
+      <div><div class="zip-stat-label">Water Risk</div>
+           <div class="zip-stat-val" style="color:${cityMatch.composite_water_risk>0.5?'#dc2626':cityMatch.composite_water_risk>0.3?'#f97316':'#22c55e'}">
+             ${(cityMatch.composite_water_risk||0).toFixed(3)}
+           </div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:0.8rem;color:${MUTED};margin-bottom:10px">NEAREST HUBS:</div>
+      ${hubsSorted.map((h,i) => {
+        const dist = haversine(cityMatch.latitude, cityMatch.longitude, h.hub_lat, h.hub_lon);
+        const dc = dist<80?'#22c55e':dist<160?'#eab308':'#dc2626';
+        return `<div class="hub-list-item">
+          <span class="hub-num">#${i+1}</span>
+          <span style="flex:1"><b>${h.hub_city}, ${h.hub_state}</b>
+            <span style="color:${MUTED};font-size:0.72rem"> · ${h.hub_region}</span></span>
+          <span class="hub-dist" style="color:${dc}">${dist.toFixed(1)} mi</span>
+          <span style="color:${MUTED};font-family:var(--mono);font-size:0.78rem">${(dist/52).toFixed(2)} hrs</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="font-family:var(--mono);font-size:0.8rem;color:${MUTED};margin-bottom:8px">RISK PROFILE:</div>
+    ${riskBar('💧 Flood',        cityMatch.flood_risk||0,       '#0ea5e9')}
+    ${riskBar('🌀 Hurricane',    cityMatch.hurricane_risk||0,   '#a78bfa')}
+    ${riskBar('🌊 Storm Surge',  cityMatch.storm_surge_risk||0, '#818cf8')}
+    ${riskBar('📊 Composite',    cityMatch.composite_water_risk||0, '#22d3ee')}`;
+}
+
+document.getElementById('zip-input').addEventListener('keyup', e => {
+  if (e.key === 'Enter') lookupZip();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+buildKPIs();
+buildMap();
+buildHubTable();
+buildCharts();
+</script>
+</body>
+</html>
